@@ -1,1 +1,16 @@
 = Introduction
+ExtjsFilterable allows the use of the Ext.ux.grid.GridFilters plugin easily with an
+ActiveRecord model. Depends on Mislav's will_paginate gem.
+
+Author:: Steve Gulics and Steve Whittaker
+
+ExtjsFilterable should be set-up in the model using the +extjs_filterable+ method:
+
+  class Person < ActiveRecord::Base
+    extjs_filterable :include => [:address, :account], :columns => {:address => 'address.description'}
+  end
+ 
+  Person.paginate_by_filter(params)
+
+
+See the +extjs_filterable+ documentation for more details.
