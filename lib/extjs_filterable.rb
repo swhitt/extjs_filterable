@@ -55,19 +55,47 @@ module ExtjsFilterable
       raise ArgumentError, 'parameter hash expected' unless opts.respond_to? :symbolize_keys
       opts.symbolize_keys!
       
+      limit, page = calculate_limit_and_page(opts)
+      sort = determine_sort(opts)
+      conditions, values = get_conditions_and_values(opts)
+      
+      {:page => page, :per_page => limit, :order => sort, :include => extjs_filterable_options[:include],
+        :conditions => [conditions.join(" and ")].concat(values)}
+    end
+    
+    # +paginate_by_filter+ is the main method used in controllers. Uses the options and parameters 
+    # passed in, proccesses them and then passes them to will_paginate.
+    def paginate_by_filter(opts={})
+      paginate(filter_and_sort_options(opts))
+    end
+    
+    # for will_paginate's default +per_page+
+    def per_page
+      @@per_page rescue nil
+    end
+
+    # Returns the options stored by the plugin.
+    def extjs_filterable_options
+      read_inheritable_attribute(:extjs_filterable_options)
+    end
+        
+    def calculate_limit_and_page(opts)
       limit = opts[:limit].try(:to_i) || class_variable_get(:@@per_page) rescue 100
       page =  ((opts[:start].try(:to_i) || 0) / limit) + 1
-      
-      if opts[:sort].blank?
-        sort = extjs_filterable_options[:default_sort] || 'created_at'
+      [limit, page]
+    end
+    
+    def determine_sort(opts)
+      return (extjs_filterable_options[:default_sort] || 'created_at') if opts[:sort].blank?
+        
+      if extjs_filterable_options[:columns][opts[:sort].to_sym]
+        "#{extjs_filterable_options[:columns][opts[:sort]]} #{opts[:dir]}"
       else
-        if extjs_filterable_options[:columns][opts[:sort].to_sym]
-          sort = "#{extjs_filterable_options[:columns][opts[:sort]]} #{opts[:dir]}"
-        else
-          sort = "#{opts[:sort]} #{opts[:dir]}"
-        end
+        "#{opts[:sort]} #{opts[:dir]}"
       end
-      
+    end
+    
+    def get_conditions_and_values(opts)
       conditions = ["#{primary_key} is not null"]
       values = []
             
@@ -101,24 +129,7 @@ module ExtjsFilterable
       
       end
       
-      {:page => page, :per_page => limit, :order => sort, :include => extjs_filterable_options[:include],
-        :conditions => [conditions.join(" and ")].concat(values)}
-    end
-    
-    # +paginate_by_filter+ is the main method used in controllers. Uses the options and parameters 
-    # passed in, proccesses them and then passes them to will_paginate.
-    def paginate_by_filter(opts={})
-      paginate(filter_and_sort_options(opts))
-    end
-    
-    # for will_paginate's default +per_page+
-    def per_page
-      @@per_page rescue nil
-    end
-
-    # Returns the options stored by the plugin.
-    def extjs_filterable_options
-      read_inheritable_attribute(:extjs_filterable_options)
+      [conditions, values]
     end
     
   end
