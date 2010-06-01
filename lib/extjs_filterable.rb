@@ -89,7 +89,7 @@ module ExtjsFilterable
       return (extjs_filterable_options[:default_sort] || 'created_at') if opts[:sort].blank?
         
       if extjs_filterable_options[:columns][opts[:sort].to_sym]
-        "#{extjs_filterable_options[:columns][opts[:sort]]} #{opts[:dir]}"
+        "#{extjs_filterable_options[:columns][opts[:sort].to_sym]} #{opts[:dir]}"
       else
         "#{opts[:sort]} #{opts[:dir]}"
       end
